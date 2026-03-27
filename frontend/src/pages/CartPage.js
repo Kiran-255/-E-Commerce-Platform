@@ -1,4 +1,5 @@
 import { useCartLogic } from '../hooks/useCartLogic'
+import { useNavigate } from 'react-router-dom'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
@@ -8,6 +9,7 @@ import { useState } from 'react'
 const CartPage = () => {
   const { cart, loading, updateItem, removeItem } = useCartLogic()
   const [updatingId, setUpdatingId] = useState(null)
+  const navigate = useNavigate()
 
   const handleQuantityChange = async (productId, value) => {
     if (value < 1) return
@@ -94,7 +96,9 @@ const CartPage = () => {
             <span>Total</span>
             <span>Rs. {total.toFixed(2)}</span>
           </div>
-          <Button className="w-full bg-green-600 hover:bg-green-700 px-6 py-3 text-white rounded-2xl shadow-lg">
+          <Button
+          onClick={() => navigate('/checkout')} 
+          className="w-full bg-green-600 hover:bg-green-700 px-6 py-3 text-white rounded-2xl shadow-lg">
             Proceed to Checkout
           </Button>
         </div>
