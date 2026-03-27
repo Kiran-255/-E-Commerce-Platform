@@ -17,7 +17,8 @@ export const AuthProvider = ({ children }) => {
     setError(null)
     try {
       const { data } = await api.post('/auth/login', { email, password })
-      setUser(data)
+      const userData = { ...data, isAdmin: data.role === 'admin' }
+      setUser(userData)
       localStorage.setItem('userInfo', JSON.stringify(data))
       return true  
     } catch (err) {
@@ -33,7 +34,8 @@ export const AuthProvider = ({ children }) => {
     setError(null)
     try {
       const { data } = await api.post('/auth/register', { name, email, password })
-      setUser(data)
+      const userData = { ...data, isAdmin: data.role === 'admin' }
+      setUser(userData)
       localStorage.setItem('userInfo', JSON.stringify(data))
       return true
     } catch (err) {
