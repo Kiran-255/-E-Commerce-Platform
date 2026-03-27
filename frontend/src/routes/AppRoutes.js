@@ -7,6 +7,7 @@ import Shop from '../pages/Shop'
 import AdminProducts from '../pages/AdminProducts'
 import ProtectedRoute from '../components/ProtectedRoute'
 import ProductDetails from '../pages/ProductDetails'
+import CartPage from '../pages/CartPage'
 
 const AppRoutes = () => {
   return (
@@ -20,7 +21,7 @@ const AppRoutes = () => {
         <Route path="/shop" element={<Shop />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route
-        
+
           path="/admin/products"
           element={
             <ProtectedRoute adminRequired={true}>
@@ -28,6 +29,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
         
       </Routes>
     </>
