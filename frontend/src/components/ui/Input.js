@@ -2,7 +2,7 @@ const Input = ({
   type = 'text',
   placeholder,
   value,
-  onChange,
+ onChange,
   required = false,
   className = '',
 }) => (

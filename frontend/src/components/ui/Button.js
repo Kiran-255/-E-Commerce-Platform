@@ -1,6 +1,7 @@
-const Button = ({ type = 'button', children, loading = false, className = '' }) => (
+const Button = ({ type = 'button', children, loading = false, className = '', onClick }) => (
   <button
     type={type}
+    onClick={onClick}
     disabled={loading}
     className={`w-full py-3 px-4 rounded-lg font-semibold text-white shadow-sm transition-colors duration-200
       ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}
