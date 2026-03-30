@@ -97,7 +97,7 @@ const AdminLayout = () => {
       <div className="flex-1 flex flex-col overflow-auto">
 
         <header className="flex justify-between items-center bg-white shadow px-6 py-4 border-b">
-  <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+  <h1 className="text-xl font-bold text-gray-600">Welcome Admin</h1>
   <NavLink
     to="/shop"
     className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition"

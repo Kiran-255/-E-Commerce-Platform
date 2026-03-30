@@ -119,7 +119,10 @@ const AdminProducts = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Products Management</h1>
+        <div className="mb-6">
+  <h1 className="text-3xl font-bold text-gray-900">Manage Your Products</h1>
+  <p className="text-gray-600 mt-1">Add, edit, or remove items from your store. Use search, filters, and sorting to quickly find what you need.</p>
+</div>
         <div className="flex flex-wrap gap-3 items-center">
           <input
             type="text"

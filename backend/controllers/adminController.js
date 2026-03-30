@@ -8,7 +8,7 @@ const getDashboardStats = async (req, res, next) => {
 
     const totalProducts = await Product.countDocuments()
     const totalUsers = await User.countDocuments()
-    
+
 
     const revenueData = await Order.aggregate([
       {
@@ -23,10 +23,12 @@ const getDashboardStats = async (req, res, next) => {
     const pendingOrders = await Order.countDocuments({ status: 'pending' })
 
 
+
     const lowStock = await Product.countDocuments({ stock: { $lte: 5 } })
 
     const recentOrders = await Order.find()
       .sort({ createdAt: -1 })
+
       .limit(5)
       .populate('user', 'name')
 
@@ -40,7 +42,8 @@ const getDashboardStats = async (req, res, next) => {
       lowStock,
       recentOrders
     })
-  } catch (err) {
+  } 
+  catch (err) {
     next(err)
   }
 }
