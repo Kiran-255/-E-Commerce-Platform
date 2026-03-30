@@ -50,8 +50,8 @@ const Checkout = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-
+     <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Secure Checkout</h1>
+<p className="text-gray-600 text-lg mb-8">Confirm your items, review order details, and complete your purchase safely</p>
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           <CheckoutItems

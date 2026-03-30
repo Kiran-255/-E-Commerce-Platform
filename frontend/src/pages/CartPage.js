@@ -56,7 +56,8 @@ const CartPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-extrabold mb-8 text-gray-900">Your Cart</h1>
+      <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Your Shopping Cart</h1>
+<p className="text-gray-600 text-lg mb-8">Review your selected items, adjust quantities, and proceed to secure checkout</p>
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">

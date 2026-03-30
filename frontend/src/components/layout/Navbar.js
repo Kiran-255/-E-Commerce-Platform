@@ -13,17 +13,13 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false)
 
   const cartCount = cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0
+  const handleLogout = () => { logout(); navigate('/') }
+  if (user?.role === 'admin') return null
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
-if (user?.role === 'admin') return null
   return (
-    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-        
-        <Link to="/" className="text-xl md:text-2xl font-bold text-gray-900 hover:text-green-600 transition">
+        <Link to="/" className="text-2xl md:text-3xl font-extrabold text-gray-900 hover:text-green-600 transition">
           Deen Essentials
         </Link>
 
@@ -33,7 +29,7 @@ if (user?.role === 'admin') return null
           {!user ? (
             <>
               <Link to="/login" className="hover:text-green-600 transition">Sign In</Link>
-              <Link to="/register" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition shadow-sm">
+              <Link to="/register" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition shadow-md">
                 Sign Up
               </Link>
             </>
@@ -51,7 +47,7 @@ if (user?.role === 'admin') return null
               <div className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-2 hover:shadow-lg transition px-2 py-1 rounded-md"
+                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:shadow-lg transition"
                 >
                   <UserCircleIcon className="w-8 h-8 text-gray-600" />
                   <span className="font-medium text-gray-700">{user.name}</span>
@@ -59,18 +55,11 @@ if (user?.role === 'admin') return null
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg border rounded-lg py-2 z-20">
-                    <Link
-                      to="/my-orders"
-                      onClick={() => setProfileOpen(false)}
-                      className="block px-4 py-2 hover:bg-gray-100"
-                    >
+                  <div className="absolute right-0 mt-2 w-44 bg-white shadow-lg border rounded-xl py-2 z-20">
+                    <Link to="/my-orders" onClick={() => setProfileOpen(false)} className="block px-4 py-2 hover:bg-gray-100 transition">
                       My Orders
                     </Link>
-                    <button
-                      onClick={() => { handleLogout(); setProfileOpen(false) }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                    >
+                    <button onClick={() => { handleLogout(); setProfileOpen(false) }} className="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
                       Logout
                     </button>
                   </div>
@@ -86,13 +75,13 @@ if (user?.role === 'admin') return null
       </div>
 
       {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 px-4 py-4 flex flex-col gap-3 text-gray-700 font-medium">
+        <div className="md:hidden bg-white border-t border-gray-200 px-4 py-4 flex flex-col gap-3 text-gray-700 font-medium shadow-lg">
           <Link to="/shop" onClick={() => setMenuOpen(false)} className="hover:text-green-600 transition">Shop</Link>
 
           {!user ? (
             <>
               <Link to="/login" onClick={() => setMenuOpen(false)} className="hover:text-green-600 transition">Sign In</Link>
-              <Link to="/register" onClick={() => setMenuOpen(false)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-center hover:bg-green-700 transition">
+              <Link to="/register" onClick={() => setMenuOpen(false)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-center hover:bg-green-700 transition shadow-md">
                 Sign Up
               </Link>
             </>
@@ -100,10 +89,7 @@ if (user?.role === 'admin') return null
             <>
               <Link to="/my-orders" onClick={() => setMenuOpen(false)} className="hover:text-green-600 transition">My Orders</Link>
               <Link to="/cart" onClick={() => setMenuOpen(false)} className="hover:text-green-600 transition">Cart</Link>
-              <button
-                onClick={() => { handleLogout(); setMenuOpen(false) }}
-                className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-black transition"
-              >
+              <button onClick={() => { handleLogout(); setMenuOpen(false) }} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition shadow-md">
                 Logout
               </button>
             </>
