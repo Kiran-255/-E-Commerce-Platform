@@ -4,7 +4,7 @@ import Button from '../components/ui/Button'
 const OrderConfirmation = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  
+
   const order = location.state
 
   if (!order) {
@@ -79,7 +79,7 @@ const OrderConfirmation = () => {
           </Button>
           <Button
             onClick={() => navigate('/shop')}
-            className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-6 rounded-2xl shadow-sm transition"
+            className="w-full sm:w-auto bg-gray-400 hover:bg-gray-500 text-gray-800 py-3 px-6 rounded-2xl shadow-sm transition"
           >
             Continue Shopping
           </Button>

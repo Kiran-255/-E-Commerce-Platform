@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import api from '../api/axios'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import Button from '../components/ui/Button'
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { PencilIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 import AddEditModal from '../components/modals/AddEditModal'
 import DeleteModal from '../components/modals/DeleteModal'
@@ -16,8 +16,11 @@ const AdminProducts = () => {
   const [deletingProduct, setDeletingProduct] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [totalPages, setTotalPages] = useState(1)
+  const [filterCategory, setFilterCategory] = useState('')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [order, setOrder] = useState('desc')
   const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const debounceRef = useRef(null)
   const itemsPerPage = 8
 
@@ -30,10 +33,12 @@ const AdminProducts = () => {
     }
   }
 
-  const fetchProducts = async (page = 1, search = '') => {
+  const fetchProducts = async (page = 1) => {
     try {
       setLoading(true)
-      const query = `/products?page=${page}&limit=${itemsPerPage}${search ? `&search=${search}` : ''}`
+      let query = `/products?page=${page}&limit=${itemsPerPage}&sortBy=${sortBy}&order=${order}`
+      if (searchTerm) query += `&search=${searchTerm}`
+      if (filterCategory) query += `&category=${filterCategory}`
       const { data } = await api.get(query)
       setProducts(data.products || [])
       setTotalPages(data.totalPages || 1)
@@ -50,8 +55,27 @@ const AdminProducts = () => {
     fetchProducts()
   }, [])
 
-  const openAddEditModal = (product = null) => {
-    setEditingProduct(product)
+  useEffect(() => {
+    fetchProducts(1)
+  }, [filterCategory, sortBy, order])
+
+  const handleSearch = value => {
+    setSearchTerm(value)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchProducts(1), 400)
+  }
+
+  const toggleSort = field => {
+    if (sortBy === field) {
+      setOrder(order === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(field)
+      setOrder('asc')
+    }
+  }
+
+  const openAddEditModal = product => {
+    setEditingProduct(product || null)
     setIsModalOpen(true)
   }
 
@@ -73,7 +97,7 @@ const AdminProducts = () => {
         await api.post('/products', payload)
         toast.success('Product created')
       }
-      fetchProducts(currentPage, searchTerm)
+      fetchProducts(currentPage)
       closeAddEditModal()
     } catch (err) {
       toast.error(err.response?.data?.message || err.message)
@@ -85,24 +109,18 @@ const AdminProducts = () => {
     try {
       await api.delete(`/products/${deletingProduct._id}`)
       toast.success('Product deleted')
-      fetchProducts(currentPage, searchTerm)
+      fetchProducts(currentPage)
       closeDeleteModal()
     } catch (err) {
       toast.error(err.response?.data?.message || err.message)
     }
   }
 
-  const handleSearch = value => {
-    setSearchTerm(value)
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => fetchProducts(1, value), 400)
-  }
-
   return (
     <div className="container mx-auto p-6">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Products Management</h1>
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex flex-wrap gap-3 items-center">
           <input
             type="text"
             placeholder="Search products..."
@@ -110,6 +128,16 @@ const AdminProducts = () => {
             onChange={e => handleSearch(e.target.value)}
             className="border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm w-full md:w-64"
           />
+          <select
+            value={filterCategory}
+            onChange={e => setFilterCategory(e.target.value)}
+            className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm w-full md:w-48"
+          >
+            <option value="">All Categories</option>
+            {categories.map(c => (
+              <option key={c._id} value={c.name}>{c.name}</option>
+            ))}
+          </select>
           <Button
             className="bg-green-600 hover:bg-green-700 text-white w-auto rounded-lg shadow-md"
             onClick={() => openAddEditModal(null)}
@@ -119,20 +147,20 @@ const AdminProducts = () => {
         </div>
       </div>
 
-      {loading ? (
-        <LoadingSpinner />
-      ) : error ? (
-        <p className="text-red-500 font-medium">{error}</p>
-      ) : (
+      {loading ? <LoadingSpinner /> : error ? <p className="text-red-500 font-medium">{error}</p> : (
         <>
           <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg">
               <thead className="bg-green-600 text-white sticky top-0 z-10">
                 <tr>
                   <th className="py-3 px-3 text-left font-medium">Image</th>
-                  <th className="py-3 px-6 text-left font-medium">Name</th>
+                  <th className="py-3 px-6 text-left font-medium cursor-pointer" onClick={() => toggleSort('name')}>
+                    Name {sortBy === 'name' && (order === 'asc' ? <ChevronUpIcon className="inline w-4 h-4" /> : <ChevronDownIcon className="inline w-4 h-4" />)}
+                  </th>
                   <th className="py-3 px-6 text-left font-medium">Category</th>
-                  <th className="py-3 px-6 text-left font-medium">Price</th>
+                  <th className="py-3 px-6 text-left font-medium cursor-pointer" onClick={() => toggleSort('price')}>
+                    Price {sortBy === 'price' && (order === 'asc' ? <ChevronUpIcon className="inline w-4 h-4" /> : <ChevronDownIcon className="inline w-4 h-4" />)}
+                  </th>
                   <th className="py-3 px-6 text-left font-medium">Stock</th>
                   <th className="py-3 px-6 text-right font-medium">Actions</th>
                 </tr>
@@ -140,9 +168,7 @@ const AdminProducts = () => {
               <tbody className="divide-y divide-gray-200">
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-500">
-                      No products found
-                    </td>
+                    <td colSpan={6} className="text-center py-10 text-gray-500">No products found</td>
                   </tr>
                 ) : (
                   products.map((p, idx) => (
@@ -156,9 +182,7 @@ const AdminProducts = () => {
                       <td className="py-3 px-6">
                         {p.stock <= 5 ? (
                           <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold">⚠️ Low ({p.stock})</span>
-                        ) : (
-                          <span className="text-gray-700 font-medium">{p.stock}</span>
-                        )}
+                        ) : <span className="text-gray-700 font-medium">{p.stock}</span>}
                       </td>
                       <td className="py-3 px-6 text-right flex justify-end gap-2">
                         <button
@@ -184,23 +208,23 @@ const AdminProducts = () => {
           {totalPages > 1 && (
             <div className="flex justify-center items-center mt-6 gap-2 flex-wrap">
               <button
-                onClick={() => fetchProducts(currentPage - 1, searchTerm)}
+                onClick={() => fetchProducts(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`px-4 py-2 rounded font-medium transition ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 shadow-sm'}`}
               >
-               ← Previous
+                ← Previous
               </button>
               {[...Array(totalPages)].map((_, idx) => (
                 <button
                   key={idx}
-                  onClick={() => fetchProducts(idx + 1, searchTerm)}
+                  onClick={() => fetchProducts(idx + 1)}
                   className={`px-4 py-2 rounded font-medium transition ${currentPage === idx + 1 ? 'bg-green-600 text-white shadow' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
                   {idx + 1}
                 </button>
               ))}
               <button
-                onClick={() => fetchProducts(currentPage + 1, searchTerm)}
+                onClick={() => fetchProducts(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className={`px-4 py-2 rounded font-medium transition ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 shadow-sm'}`}
               >
