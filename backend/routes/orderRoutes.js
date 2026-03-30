@@ -10,6 +10,7 @@ router.post('/checkout', protect, createOrder)
 
 router.get('/my', protect, getUserOrders)
 
+
 router.get('/', protect, admin, getAllOrders)
 
 router.put('/:id/status', protect, admin, updateOrderStatus)
