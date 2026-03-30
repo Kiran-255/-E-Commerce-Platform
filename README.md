@@ -333,7 +333,4 @@ Using Context API:
 ├── 📄 package.json
 └── 📄 .gitignore
 
-Empty states
-⭐ Advanced Features
-Cart persistence using localStorage
-Order status updates
+
