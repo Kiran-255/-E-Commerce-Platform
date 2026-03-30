@@ -1,110 +1,125 @@
-# E-Commerce Platform (Full Stack)
+🛒 E-Commerce Platform (Full Stack)
+📌 Project Overview
 
-A full-stack e-commerce platform built with **React**, **Node.js + Express**, and **MongoDB Atlas**. Users can browse products, manage carts, place orders, and the system supports role-based access for admin and customer users.
+This project is a complete full-stack E-Commerce Platform built as part of an evaluation assignment. It allows users to browse products, manage their cart, and place orders, while providing admins with full control over products, users, and orders.
 
----
+🚀 Tech Stack
+Frontend
+React.js
+React Router
+Context API (State Management)
+Tailwind CSS
+Backend
+Node.js
+Express.js
+MongoDB Atlas
+JWT Authentication
+🔐 Authentication & Authorization
+JWT-based authentication system
+Role-based access control:
+Admin
+Customer
+Protected routes for both frontend and backend
+APIs
+Register User
+Login User
+👥 Roles & Permissions
+Admin
+Manage Products (CRUD)
+Manage Users
+Manage Orders
+Customer
+Browse Products
+Add to Cart
+Place Orders
+📦 Features
+🛍️ Product Management
+Create, Update, Delete Products (Admin only)
+View all products
+View single product details
+Search and filter by category
+🛒 Cart System
+Add to cart
+Remove from cart
+Update product quantity
+Cart linked to authenticated user
+💳 Checkout System
+Stock validation
+Total price calculation
+Discount application
+Shipping cost calculation
+Order creation
+📊 Pricing Logic
+Discount applied if total > 5000
+Bulk discount if quantity > 3
+Prevent negative stock
+Reject checkout if stock is insufficient
+🚚 Shipping Logic
+Free shipping above threshold
+Fixed shipping fee otherwise
+📦 Order Management
+Create Order
+Get User Orders
+Get All Orders (Admin)
+🧠 State Management
 
-## Table of Contents
+Managed using Context API:
 
-- [Features](#features)  
-- [Tech Stack](#tech-stack)  
-- [Folder Structure](#folder-structure)  
-- [Setup Instructions](#setup-instructions)  
-- [Core Features & Logic](#core-features--logic)  
-- [State Management](#state-management)  
-- [Advanced Features](#advanced-features)  
-- [Demo](#demo)  
-- [License](#license)  
+Products Context
+Cart Context
+Orders Context
+🔍 Search & Filters
+Search products by name
+Filter products by category
+⚙️ Hooks Used
+useState
+useEffect
+useMemo
+Custom Hooks
+useCartLogic
+useCheckoutLogic
+🎨 UI/UX
+Fully responsive design (Mobile → Desktop)
+Built with Tailwind CSS
+Clean and modern layout
+Loading states
+Empty states
+⭐ Advanced Features
+Cart persistence using localStorage
+Coupon/discount system
+Order status updates
+📁 Folder Structure
+/client
+  /components
+  /pages
+  /context
+  /hooks
+  /api
 
----
+/server
+  /controllers
+  /models
+  /routes
+  /middleware
+  /config
+⚙️ Setup Instructions
+1. Clone Repository
+git clone https://github.com/your-username/ecommerce-platform.git
+cd ecommerce-platform
+2. Setup Backend
+cd server
+npm install
 
-## Features
+Create .env file:
 
-### Authentication
-- JWT-based authentication
-- User registration & login
-- Role-based access: Admin / Customer
-- Protected API routes
+PORT=5000
+MONGO_URI=your_mongodb_connection
+JWT_SECRET=your_secret_key
 
-### Product Management
-- Admin: Create, update, delete products
-- Product fields: name, price, category, stock, description
-- Customer: Browse products, view details, filter by category, search
+Run backend:
 
-### Cart System
-- Add/remove products
-- Update quantity
-- Cart stored per authenticated user
-
-### Checkout System
-- Stock validation
-- Total calculation
-- Discounts:
-  - Total > 5000 → discount
-  - Quantity > 3 → bulk discount
-- Shipping logic:
-  - Free above threshold
-  - Fixed shipping fee otherwise
-- Order creation
-
-### Order Management
-- Customer: View order history
-- Admin: View all orders
-- Track products, total price, status
-
-### UI/UX
-- Responsive design (mobile → desktop)
-- Tailwind CSS styling
-- Clean layout
-- Loading and empty states
-
----
-
-## Tech Stack
-
-**Frontend:**  
-- React  
-- React Router  
-- Context API for state management  
-- Tailwind CSS  
-
-**Backend:**  
-- Node.js  
-- Express.js  
-- JWT authentication  
-- MongoDB Atlas  
-
-**Other Tools:**  
-- Axios for API requests  
-- bcrypt for password hashing  
-
----
-
-## Folder Structure
-
-
-ecommerce-platform/
-│
-├── backend/
-│ ├── config/ # DB & environment config
-│ ├── controllers/ # API logic
-│ ├── models/ # MongoDB models
-│ ├── routes/ # API routes
-│ ├── middleware/ # Auth & error handling
-│ └── server.js
-│
-├── frontend/
-│ ├── src/
-│ │ ├── components/ # UI components
-│ │ ├── pages/ # Page components
-│ │ ├── context/ # State management
-│ │ ├── hooks/ # Custom hooks (useCartLogic / useCheckoutLogic)
-│ │ ├── services/ # API calls
-│ │ └── App.js
-│ └── tailwind.config.js
-│
-├── .env # Environment variables
-├── package.json
-└── README.md
-
-
+npm run dev
+3. Setup Frontend
+cd client
+npm install
+npm run dev
