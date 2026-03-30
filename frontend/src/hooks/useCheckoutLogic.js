@@ -2,10 +2,13 @@ import { useState } from 'react'
 import api from '../api/axios'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
+import { useCartLogic } from './useCartLogic'
 
 export const useCheckoutLogic = () => {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+
+   const { fetchCart } = useCartLogic() 
 
   const placeOrder = async (redirect = true) => {
     setLoading(true)
@@ -13,6 +16,7 @@ export const useCheckoutLogic = () => {
       const { data } = await api.post('/orders/checkout')
       toast.success('Order placed successfully')
 
+       await fetchCart()
       if (redirect) navigate('/my-orders')
 
       return data

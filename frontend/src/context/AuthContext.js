@@ -4,12 +4,16 @@ export const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     const savedUser = localStorage.getItem('userInfo')
-    if (savedUser) setUser(JSON.parse(savedUser))
+    if (savedUser){ 
+      const parsedUser = (JSON.parse(savedUser))
+      setUser(parsedUser)
+    }
+    setLoading(false)
   }, [])
 
   const login = async (email, password) => {
@@ -19,7 +23,7 @@ export const AuthProvider = ({ children }) => {
       const { data } = await api.post('/auth/login', { email, password })
       const userData = { ...data, isAdmin: data.role === 'admin' }
       setUser(userData)
-      localStorage.setItem('userInfo', JSON.stringify(data))
+      localStorage.setItem('userInfo', JSON.stringify(userData))
       return true  
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed')
@@ -36,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       const { data } = await api.post('/auth/register', { name, email, password })
       const userData = { ...data, isAdmin: data.role === 'admin' }
       setUser(userData)
-      localStorage.setItem('userInfo', JSON.stringify(data))
+      localStorage.setItem('userInfo', JSON.stringify(userData))
       return true
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed')

@@ -3,36 +3,24 @@ import api from '../api/axios'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import Button from '../components/ui/Button'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { toast } from 'react-toastify'
+import AddEditModal from '../components/modals/AddEditModal'
+import DeleteModal from '../components/modals/DeleteModal'
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([])
-  const [categories, setCategories] = useState([]) 
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [deletingProduct, setDeletingProduct] = useState(null)
-
-  const [submitLoading, setSubmitLoading] = useState(false)
-  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-
+  const [totalPages, setTotalPages] = useState(1)
   const [currentPage, setCurrentPage] = useState(1)
-  const [imagePreview, setImagePreview] = useState('') 
+  const debounceRef = useRef(null)
   const itemsPerPage = 8
 
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    category: '', 
-    stock: '',
-    description: '',
-    image: '',
-  })
-
-  const modalRef = useRef()
   const fetchCategories = async () => {
     try {
       const { data } = await api.get('/categories')
@@ -41,11 +29,15 @@ const AdminProducts = () => {
       console.log(err)
     }
   }
-  const fetchProducts = async () => {
+
+  const fetchProducts = async (page = 1, search = '') => {
     try {
       setLoading(true)
-      const { data } = await api.get('/products')
+      const query = `/products?page=${page}&limit=${itemsPerPage}${search ? `&search=${search}` : ''}`
+      const { data } = await api.get(query)
       setProducts(data.products || [])
+      setTotalPages(data.totalPages || 1)
+      setCurrentPage(data.page || 1)
     } catch (err) {
       setError(err.response?.data?.message || err.message)
     } finally {
@@ -54,120 +46,57 @@ const AdminProducts = () => {
   }
 
   useEffect(() => {
-    fetchCategories() 
+    fetchCategories()
     fetchProducts()
   }, [])
 
-  // Modal handlers
-  const openModal = (product = null) => {
+  const openAddEditModal = (product = null) => {
     setEditingProduct(product)
-    setFormData(
-  
-      product
-        ? { ...product }
-        : { name: '', price: '', category: '', stock: '', description: '', image: '' }
-    )
-    setImagePreview(product?.image || '') 
-
-    setModalOpen(true)
+    setIsModalOpen(true)
   }
 
-  const closeModal = () => {
+  const closeAddEditModal = () => {
     setEditingProduct(null)
-    setModalOpen(false)
-    
-    setImagePreview('') 
+    setIsModalOpen(false)
   }
 
-  const openDeleteModal = (product) => {
-    setDeletingProduct(product)
+  const openDeleteModal = product => setDeletingProduct(product)
+  const closeDeleteModal = () => setDeletingProduct(null)
 
-    setDeleteModalOpen(true)
-  }
-
-  const closeDeleteModal = () => {
-    setDeletingProduct(null)
-    setDeleteModalOpen(false)
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-
-    if (name === 'image') setImagePreview(value) 
-  }
-  const validateForm = () => {
-    const { name, price, stock, category, image } = formData
-    if (!name || !category || !image) return 'Please fill all required fields.'
-
-    if (Number(price) < 0) return 'Price cannot be negative.'
-    if (Number(stock) < 0) return 'Stock cannot be negative.'
-    return null
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const validationError = validateForm()
-    if (validationError) return alert(validationError)
-
+  const handleSubmit = async formData => {
     try {
-      setSubmitLoading(true)
-      const payload = {
-        ...formData,
-        price: Number(formData.price),
-
-        stock: Number(formData.stock),
+      const payload = { ...formData, price: Number(formData.price), stock: Number(formData.stock) }
+      if (editingProduct) {
+        await api.put(`/products/${editingProduct._id}`, payload)
+        toast.success('Product updated')
+      } else {
+        await api.post('/products', payload)
+        toast.success('Product created')
       }
-
-      if (editingProduct) await api.put(`/products/${editingProduct._id}`, payload)
-      else await api.post('/products', payload)
-
-      await fetchProducts()
-
-      closeModal()
+      fetchProducts(currentPage, searchTerm)
+      closeAddEditModal()
     } catch (err) {
-      alert(err.response?.data?.message || err.message)
-    } finally {
-      setSubmitLoading(false)
+      toast.error(err.response?.data?.message || err.message)
     }
   }
 
   const handleDelete = async () => {
     if (!deletingProduct) return
     try {
-      setDeleteLoading(true)
       await api.delete(`/products/${deletingProduct._id}`)
-      await fetchProducts()
+      toast.success('Product deleted')
+      fetchProducts(currentPage, searchTerm)
       closeDeleteModal()
     } catch (err) {
-      alert(err.response?.data?.message || err.message)
-    } finally {
-      setDeleteLoading(false)
+      toast.error(err.response?.data?.message || err.message)
     }
   }
 
-
-  const handleOutsideClick = (e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) closeModal()
+  const handleSearch = value => {
+    setSearchTerm(value)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchProducts(1, value), 400)
   }
-
-  useEffect(() => {
-    if (modalOpen) document.addEventListener('mousedown', handleOutsideClick)
-    else document.removeEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [modalOpen])
-
-
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-
-  )
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
-  const paginatedProducts = filteredProducts.slice(
-
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
 
   return (
     <div className="container mx-auto p-6">
@@ -175,19 +104,15 @@ const AdminProducts = () => {
         <h1 className="text-3xl font-bold text-gray-900">Products Management</h1>
         <div className="flex gap-3 flex-wrap">
           <input
-
             type="text"
             placeholder="Search products..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value)
-              setCurrentPage(1)
-            }}
-            className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            onChange={e => handleSearch(e.target.value)}
+            className="border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm w-full md:w-64"
           />
           <Button
             className="bg-green-600 hover:bg-green-700 text-white w-auto rounded-lg shadow-md"
-            onClick={() => openModal()}
+            onClick={() => openAddEditModal(null)}
           >
             + Add Product
           </Button>
@@ -202,203 +127,110 @@ const AdminProducts = () => {
         <>
           <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg">
-              <thead className="bg-green-600 text-white">
+              <thead className="bg-green-600 text-white sticky top-0 z-10">
                 <tr>
-        <th className="py-3 px-6 text-left font-medium">Name</th>
+                  <th className="py-3 px-3 text-left font-medium">Image</th>
+                  <th className="py-3 px-6 text-left font-medium">Name</th>
                   <th className="py-3 px-6 text-left font-medium">Category</th>
                   <th className="py-3 px-6 text-left font-medium">Price</th>
                   <th className="py-3 px-6 text-left font-medium">Stock</th>
                   <th className="py-3 px-6 text-right font-medium">Actions</th>
                 </tr>
               </thead>
-         <tbody className="divide-y divide-gray-200">
-
-
-                {paginatedProducts.map((p) => (
-                  <tr key={p._id} className="hover:bg-green-50 transition">
-                    <td className="py-3 px-6 font-medium text-gray-900">{p.name}</td>
-                    <td className="py-3 px-6 text-gray-700">{p.category}</td>
-                    <td className="py-3 px-6 font-semibold text-gray-900">Rs. {p.price}</td>
-                    <td className="py-3 px-6 text-gray-700">{p.stock}</td>
-                    <td className="py-3 px-6 text-right flex justify-end gap-2">
-                      <button
-                        onClick={() => openModal(p)}
-                        className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg transition shadow-sm"
-                      >
-                        <PencilIcon className="w-4 h-4" /> Edit
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(p)}
-                        className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition shadow-sm"
-                      >
-            <TrashIcon className="w-4 h-4" /> Delete
-                      </button>
+              <tbody className="divide-y divide-gray-200">
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10 text-gray-500">
+                      No products found
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  products.map((p, idx) => (
+                    <tr key={p._id} className={`transition hover:bg-green-50 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                      <td className="py-3 px-3">
+                        <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded-lg border" />
+                      </td>
+                      <td className="py-3 px-6 font-medium text-gray-900">{p.name}</td>
+                      <td className="py-3 px-6 text-gray-700">{p.category}</td>
+                      <td className="py-3 px-6 font-semibold text-gray-900">Rs. {p.price}</td>
+                      <td className="py-3 px-6">
+                        {p.stock <= 5 ? (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold">⚠️ Low ({p.stock})</span>
+                        ) : (
+                          <span className="text-gray-700 font-medium">{p.stock}</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-6 text-right flex justify-end gap-2">
+                        <button
+                          onClick={() => openAddEditModal(p)}
+                          className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg transition shadow-sm"
+                        >
+                          <PencilIcon className="w-4 h-4" /> Edit
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(p)}
+                          className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition shadow-sm"
+                        >
+                          <TrashIcon className="w-4 h-4" /> Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
-      {totalPages > 1 && (
-            <div className="flex justify-center mt-6 gap-2">
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-6 gap-2 flex-wrap">
+              <button
+                onClick={() => fetchProducts(currentPage - 1, searchTerm)}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded font-medium transition ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 shadow-sm'}`}
+              >
+               ← Previous
+              </button>
               {[...Array(totalPages)].map((_, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setCurrentPage(idx + 1)}
-            className={`px-4 py-2 rounded ${
-                    
-                    currentPage === idx + 1 ? 'bg-green-600 text-white' : 'bg-gray-200'
-                  }`}
+                  onClick={() => fetchProducts(idx + 1, searchTerm)}
+                  className={`px-4 py-2 rounded font-medium transition ${currentPage === idx + 1 ? 'bg-green-600 text-white shadow' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
                   {idx + 1}
                 </button>
               ))}
+              <button
+                onClick={() => fetchProducts(currentPage + 1, searchTerm)}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded font-medium transition ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 shadow-sm'}`}
+              >
+                Next →
+              </button>
             </div>
           )}
         </>
       )}
 
-    
-      {modalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-        >
-          <div
-            ref={modalRef}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 animate-fadeIn"
-          >
-       <h2 className="text-2xl font-bold mb-6">
-              {editingProduct ? 'Edit Product' : 'Add Product'}
-            </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                name="name"
-                type="text"
-                placeholder="Name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-        
-              <select
-                name="category"
-                value={formData.category}
-          onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-              >
-                <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat.name}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="price"
-                type="number"
-                placeholder="Price"
-                value={formData.price}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-              <input
-        name="stock"
-                type="number"
-                placeholder="Stock"
-                value={formData.stock}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-              <input
-                name="image"
-                type="url"
-                placeholder="Image URL"
-                value={formData.image}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-    
-           {imagePreview && (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="mt-2 w-32 h-32 object-cover rounded-lg border"
-                />
-              )}
-              <input
-                name="description"
-                type="text"
-                placeholder="Description"
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
-              />
-
-              <div className="flex justify-end gap-3 mt-4">
-                <Button
-                  type="button"
-                  className="bg-gray-300 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-400"
-                  onClick={closeModal}
-                  disabled={submitLoading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
-                  disabled={submitLoading}
-                >
-                  {submitLoading ? 'Saving...' : editingProduct ? 'Update' : 'Add'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-    
-
-      {deleteModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-fadeIn">
-            <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
-            <p className="mb-6 text-gray-800">
-           Are you sure you want to delete{' '}
-              <span className="font-semibold">{deletingProduct?.name}</span>?
-            </p>
-            <div className="flex justify-center gap-4">
-              <Button
-                type="button"
-                className="bg-gray-300 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-400"
-                onClick={closeDeleteModal}
-                disabled={deleteLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
-                onClick={handleDelete}
-                disabled={deleteLoading}
-              >
-         {deleteLoading ? 'Deleting...' : 'Delete'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddEditModal
+        isOpen={isModalOpen}
+        onClose={closeAddEditModal}
+        onSubmit={handleSubmit}
+        initialData={editingProduct || {}}
+        fields={[
+          { name: 'name', placeholder: 'Name', required: true },
+          { name: 'category', type: 'select', placeholder: 'Select Category', required: true, options: categories.map(c => ({ value: c.name, label: c.name })) },
+          { name: 'price', type: 'number', placeholder: 'Price', required: true },
+          { name: 'stock', type: 'number', placeholder: 'Stock', required: true },
+          { name: 'image', placeholder: 'Image URL', required: true },
+          { name: 'description', placeholder: 'Description' },
+        ]}
+      />
+      <DeleteModal
+        isOpen={!!deletingProduct}
+        onClose={closeDeleteModal}
+        onConfirm={handleDelete}
+        itemName={deletingProduct?.name}
+      />
     </div>
   )
 }

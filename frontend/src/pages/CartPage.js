@@ -1,107 +1,83 @@
 import { useCartLogic } from '../hooks/useCartLogic'
 import { useNavigate } from 'react-router-dom'
-import Input from '../components/ui/Input'
-import Button from '../components/ui/Button'
+
 import EmptyState from '../components/ui/EmptyState'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
+import api from '../api/axios'
+import CheckoutItems from '../components/checkout/CheckoutItems'
+import OrderSummary from '../components/checkout/OrderSummary'
 
 const CartPage = () => {
   const { cart, loading, updateItem, removeItem } = useCartLogic()
   const [updatingId, setUpdatingId] = useState(null)
+  const [preview, setPreview] = useState(null)
+  const [loadingPreview, setLoadingPreview] = useState(true)
   const navigate = useNavigate()
 
-  const handleQuantityChange = async (productId, value) => {
-    if (value < 1) return
+  useEffect(() => {
+    const fetchPreview = async () => {
+      if (!cart.items.length) return
+      try {
+        setLoadingPreview(true)
+        const { data } = await api.get('/orders/preview')
+        setPreview(data)
+      } catch (err) {
+        console.error(err)
+        toast.error('Some items in your cart are no longer available')
+        setPreview(null)
+      } finally {
+        setLoadingPreview(false)
+      }
+    }
+     
+ fetchPreview()
+  }, [cart.items.length])
+
+  const updateQuantity = async (productId, newQty, stock) => {
+    if (newQty < 1) return
+
+     if (newQty > stock) {
+      toast.warning('Cannot add more than available stock')
+      return}
     setUpdatingId(productId)
-    await updateItem(productId, value)
+    await updateItem(productId, newQty)
     setUpdatingId(null)
   }
 
-  if (loading) return <LoadingSpinner />
+ if (loading ) return <LoadingSpinner />
   if (!cart.items.length) return <EmptyState message="Your cart is empty. Start shopping now!" />
+  if (cart.items.length && loadingPreview) return <LoadingSpinner />
 
-  const subtotal = cart.items.reduce((acc, i) => acc + i.product.price * i.quantity, 0)
-  const shipping = subtotal > 0 ? 200 : 0
-  const total = subtotal + shipping
+  const subtotal = preview.subtotal || 0
+  const shipping = preview.shipping || 0
+  const total = preview.total || 0
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-extrabold mb-8 text-gray-900">Your Cart</h1>
+
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
-          <div className="hidden lg:block border rounded-xl shadow-sm">
-            <table className="w-full text-left">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2">Product</th>
-                  <th className="px-4 py-2">Price</th>
-                  <th className="px-4 py-2">Quantity</th>
-                  <th className="px-4 py-2">Subtotal</th>
-                  <th className="px-4 py-2">Remove</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cart.items.map(({ product, quantity }) => (
-                  <tr key={product._id} className="border-b">
-                    <td className="px-4 py-3 flex items-center gap-4">
-                      <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded" />
-                      <span>{product.name}</span>
-                    </td>
-                    <td className="px-4 py-3">Rs. {product.price}</td>
-                    <td className="px-4 py-3">
-                      <Input type="number" min="1" max={product.stock} value={quantity} onChange={e => handleQuantityChange(product._id, parseInt(e.target.value))} className="w-20 text-center border rounded" />
-                    </td>
-                    <td className="px-4 py-3">Rs. {(product.price * quantity).toFixed(2)}</td>
-                    <td className="px-4 py-3">
-                      <Button onClick={() => removeItem(product._id)} loading={updatingId === product._id} className="bg-red-500 hover:bg-red-600 px-3 py-1 text-white rounded">
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="lg:hidden flex flex-col gap-4">
-            {cart.items.map(({ product, quantity }) => (
-              <div key={product._id} className="border rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex-1">
-                  <h2 className="font-semibold text-lg">{product.name}</h2>
-                  <p className="text-gray-600">Price: Rs. {product.price}</p>
-                  <p className="text-gray-600">Stock: {product.stock}</p>
-                  <p className="text-gray-700 mt-1">Subtotal: Rs. {(product.price * quantity).toFixed(2)}</p>
-                </div>
-                <div className="flex items-center gap-3 mt-2 sm:mt-0">
-                  <Input type="number" min="1" max={product.stock} value={quantity} onChange={e => handleQuantityChange(product._id, parseInt(e.target.value))} className="w-20 text-center border rounded" />
-                  <Button onClick={() => removeItem(product._id)} loading={updatingId === product._id} className="bg-red-500 hover:bg-red-600 px-4 py-2 text-white rounded">
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+
+          <CheckoutItems
+            items={preview.items}
+            cartItems={cart.items}
+            updatingId={updatingId}
+            updateQuantity={updateQuantity}
+            removeItem={removeItem}
+          />
         </div>
-        <div className="lg:w-1/3 sticky top-20 self-start border rounded-xl p-6 shadow-lg bg-white">
-          <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
-          <div className="flex justify-between mb-2">
-            <span>Subtotal</span>
-            <span>Rs. {subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between mb-2">
-            <span>Shipping</span>
-            <span>Rs. {shipping.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold text-lg mb-4">
-            <span>Total</span>
-            <span>Rs. {total.toFixed(2)}</span>
-          </div>
-          <Button
-          onClick={() => navigate('/checkout')} 
-          className="w-full bg-green-600 hover:bg-green-700 px-6 py-3 text-white rounded-2xl shadow-lg">
-            Proceed to Checkout
-          </Button>
-        </div>
+
+        <OrderSummary
+          subtotal={subtotal}
+          shipping={shipping}
+          total={total}
+          discount={preview.discount || 0}
+          onCheckoutClick={() => navigate('/checkout')}
+          disabled={!cart.items.length}
+        />
       </div>
     </div>
   )

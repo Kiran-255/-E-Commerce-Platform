@@ -57,11 +57,52 @@ const getUserOrders = async (req, res, next) => {
 
 const getAllOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find().populate('user', 'name email')
-    res.json(orders)
+    let { page = 1, limit = 8, search = '', sortBy = 'createdAt', order = 'desc' } = req.query
+    page = parseInt(page)
+    limit = parseInt(limit)
+
+    const query = {}
+    if (search) {
+      query.$or = [
+        { 'user.name': { $regex: search, $options: 'i' } },
+        { 'user.email': { $regex: search, $options: 'i' } }
+      ]
+    }
+
+    const sortOrder = order === 'asc' ? 1 : -1
+
+    const totalOrders = await Order.countDocuments()
+    const totalPages = Math.ceil(totalOrders / limit)
+
+    const orders = await Order.find(query)
+      .populate('user', 'name email')
+      .sort({ [sortBy]: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit)
+
+    res.json({ orders, totalPages, currentPage: page })
   } catch (err) {
     next(err)
   }
 }
 
-module.exports = { createOrder, previewOrder, getUserOrders, getAllOrders }
+
+const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body
+
+    const order = await Order.findById(req.params.id)
+
+if (!order) return res.status(404).json({ message: 'Order not found' })
+
+    order.status = status
+const updated = await order.save()
+
+    res.json(updated)
+  } 
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { createOrder, previewOrder, getUserOrders, getAllOrders,updateOrderStatus }
