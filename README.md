@@ -86,40 +86,4 @@ Loading states
 Empty states
 ⭐ Advanced Features
 Cart persistence using localStorage
-Coupon/discount system
 Order status updates
-📁 Folder Structure
-/client
-  /components
-  /pages
-  /context
-  /hooks
-  /api
-
-/server
-  /controllers
-  /models
-  /routes
-  /middleware
-  /config
-⚙️ Setup Instructions
-1. Clone Repository
-git clone https://github.com/your-username/ecommerce-platform.git
-cd ecommerce-platform
-2. Setup Backend
-cd server
-npm install
-
-Create .env file:
-
-PORT=5000
-MONGO_URI=your_mongodb_connection
-JWT_SECRET=your_secret_key
-
-Run backend:
-
-npm run dev
-3. Setup Frontend
-cd client
-npm install
-npm run dev
