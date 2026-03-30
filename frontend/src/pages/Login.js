@@ -13,7 +13,10 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const success = await login(email, password)
-    if (success) navigate('/')
+    if (success) {
+    const savedUser = JSON.parse(localStorage.getItem('userInfo'))
+    savedUser?.role === 'admin' ? navigate('/admin') : navigate('/')
+  }
   }
 
   return (

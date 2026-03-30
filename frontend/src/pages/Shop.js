@@ -16,9 +16,12 @@ const Shop = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [sortOption, setSortOption] = useState('')
+
+
   const [currentPage, setCurrentPage] = useState(1)
   const [categories, setCategories] = useState([])
   const [currentCategory, setCurrentCategory] = useState(searchParams.get('category') || '')
+  
   const navigate = useNavigate()
 
   const fetchCategories = async () => {

@@ -8,6 +8,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
 
   role: { type: String, enum: ['admin', 'customer'], default: 'customer' },
+  isBlocked: {type: Boolean, default: false},
+  blockedAt: {type: Date}
+
 }, { timestamps: true })
 
 
